@@ -8,7 +8,7 @@
 import Foundation
 
 extension GampangURLSession {
-    public static func hit(_ request: URLRequest) async throws -> Result<GampangURLDataResponse, HTTPError> {
-        return try await GampangURLSession(request: request).start
+    public static func executeRequest(_ request: URLRequest) async throws -> Result<GampangURLDataResponse, GampangClientError> {
+        return try await GampangURLSession(request: request).execute
     }
 }

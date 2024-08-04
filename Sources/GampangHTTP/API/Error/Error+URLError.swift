@@ -8,5 +8,5 @@
 import Foundation
 
 public enum URLError: Error {
-    case invalid
+    case badUrl
 }
