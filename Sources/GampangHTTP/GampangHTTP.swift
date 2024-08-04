@@ -1,46 +1,56 @@
 //
-//  GampangHTTPClient.swift
-//  
+//  GampangHTTP.swift
 //
-//  Created by Andika on 04/08/24.
+//
+//  Created by Andika on 03/08/24.
 //
 
 import Foundation
 
-/// A configurable HTTP client for making network requests with advanced features.
-public class GampangHTTPClient {
-    private var session: URLSession
-    private let cache: URLCache
+/// A high-level HTTP client for making network requests.
+public struct GampangHTTP {
+    private let session: URLSession
+    private let cache: URLCache?
     private let logger: GampangLogger
     private let retryPolicy: GampangRetryPolicy
     private let certificatePinning: GampangCertificatePinning?
-        
-    /// Initializes a new GampangHTTPClient with customizable components.
+    
+    /// Initializes a new GampangHTTP instance with customizable components.
     ///
     /// - Parameters:
-    ///   - session: The URLSession to use for network requests. Defaults to URLSession.shared.
-    ///   - cache: The URLCache to use for caching responses. Defaults to URLCache.shared.
+    ///   - session: The URLSession to use for network requests. Defaults to a custom configured session.
+    ///   - cache: The URLCache to use for caching responses. If nil, caching is disabled. Defaults to a custom configured cache.
     ///   - logger: The logger to use for logging operations. Defaults to GampangConsoleLogger.
     ///   - retryPolicy: The retry policy to use for failed requests. Defaults to GampangDefaultRetryPolicy.
-    ///   - pinnedCertificates: An optional array of certificate data for certificate pinning.
+    ///   - pinnedCertificates: An array of certificate data for certificate pinning. If nil, certificate pinning is disabled. Defaults to nil.
     public init(
-        session: URLSession = .shared,
-        cache: URLCache = .shared,
+        session: URLSession? = nil,
+        cache: URLCache? = URLCache(memoryCapacity: 10_000_000, diskCapacity: 100_000_000, diskPath: "gampang_http_response_cache"),
         logger: GampangLogger = GampangConsoleLogger(),
         retryPolicy: GampangRetryPolicy = GampangDefaultRetryPolicy(),
         pinnedCertificates: [Data]? = nil
     ) {
-        self.session = session
         self.cache = cache
         self.logger = logger
         self.retryPolicy = retryPolicy
         
         if let pinnedCertificates = pinnedCertificates {
             self.certificatePinning = GampangCertificatePinning(pinnedCertificates: pinnedCertificates)
-            let configuration = URLSessionConfiguration.default
-            self.session = URLSession(configuration: configuration, delegate: self.certificatePinning, delegateQueue: nil)
         } else {
             self.certificatePinning = nil
+        }
+        
+        let configuration = URLSessionConfiguration.default
+        configuration.urlCache = self.cache
+        
+        if let session = session {
+            self.session = session
+        } else {
+            if let certPinning = self.certificatePinning {
+                self.session = URLSession(configuration: configuration, delegate: certPinning, delegateQueue: nil)
+            } else {
+                self.session = URLSession(configuration: configuration)
+            }
         }
     }
     
@@ -50,7 +60,7 @@ public class GampangHTTPClient {
     ///   - request: The URLRequest to be executed.
     ///   - resultType: The type to decode the response into.
     /// - Returns: The decoded response of type T.
-    /// - Throws: An error if the request fails, decoding fails, or the request is cancelled.
+    /// - Throws: A GampangClientError if the request fails, decoding fails, or the request is cancelled.
     public func request<T: Decodable>(
         with request: URLRequest,
         of resultType: T.Type
@@ -77,7 +87,7 @@ public class GampangHTTPClient {
                         try await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000))
                         currentRequest = retryPolicy.modifyRequest(currentRequest, attempt: attempt)
                     } else {
-                        throw error
+                        throw GampangClientError.httpError(.unknown(code: -1))
                     }
                 }
             }
@@ -92,14 +102,15 @@ public class GampangHTTPClient {
     /// - Returns: A tuple containing the response data and URLResponse.
     /// - Throws: An error if the request fails.
     private func executeRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
-        if let cachedResponse = cache.cachedResponse(for: request) {
+        if let cache = cache, let cachedResponse = cache.cachedResponse(for: request) {
             logger.log("Using cached response for \(request.url?.absoluteString ?? "")")
             return (cachedResponse.data, cachedResponse.response)
         }
         
         let (data, response) = try await session.data(for: request)
         
-        if let httpResponse = response as? HTTPURLResponse,
+        if let cache = cache,
+           let httpResponse = response as? HTTPURLResponse,
            (200...299).contains(httpResponse.statusCode) {
             let cachedResponse = CachedURLResponse(response: response, data: data)
             cache.storeCachedResponse(cachedResponse, for: request)

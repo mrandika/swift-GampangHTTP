@@ -24,6 +24,6 @@ public struct GampangConsoleLogger: GampangLogger {
     ///
     /// - Parameter message: The message to be logged.
     public func log(_ message: String) {
-        print("[GampangHTTP] \(message)")
+        debugPrint("[GampangHTTP] \(message)")
     }
 }
