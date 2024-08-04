@@ -7,24 +7,27 @@
 
 import Foundation
 
+/// A high-level HTTP client for making network requests.
 public struct GampangHTTP {
+    /// Makes a network request and decodes the response into the specified type.
+    ///
+    /// - Parameters:
+    ///   - request: The URLRequest to be executed.
+    ///   - resultType: The type to decode the response into.
+    /// - Returns: The decoded response of type T.
+    /// - Throws: A GampangError if the request fails or if decoding fails.
     public static func request<T: Decodable>(
-        with request: URLRequest, of result: T.Type
+        with request: URLRequest,
+        of resultType: T.Type
     ) async throws -> T {
-        var response: T
+        let client = GampangHTTPClient()
         
-        let result = try await GampangURLSession.hit(request)
-        
-        switch result {
-        case .success(let success):
-            let decoder = JSONDecoder()
-            let result = try decoder.decode(T.self, from: success.data)
-
-            response = result
-        case .failure(let failure):
-            throw failure
+        do {
+            return try await client.request(with: request, of: resultType)
+        } catch let error as GampangHTTPError {
+            throw GampangClientError.httpError(error)
+        } catch {
+            throw GampangClientError.decodingError(error)
         }
-        
-        return response
     }
 }

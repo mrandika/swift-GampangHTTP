@@ -7,14 +7,22 @@
 
 import Foundation
 
+/// Represents a URL request with customizable components.
 public struct GampangURLRequest {
+    /// The base URL string for the request.
     let url: String
+    /// The HTTP method for the request.
     let method: HTTPMethod
+    /// The body of the request as key-value pairs.
     let body: [String: Any]?
+    /// Raw data to be sent in the request body.
     let data: Data?
+    /// Query items to be appended to the URL.
     let queryItems: [URLQueryItem]
+    /// Custom headers for the request.
     let headers: [(field: HTTPHeaderField, value: String)]?
 
+    /// Initializes a new GampangURLRequest.
     public init(
         url: String,
         method: HTTPMethod,
@@ -31,38 +39,28 @@ public struct GampangURLRequest {
         self.headers = headers
     }
 
-    var build: URLRequest {
+    /// Builds and returns a URLRequest based on the configured properties.
+    var urlRequest: URLRequest {
         get throws {
             var urlComponents = URLComponents(string: url)
-
-            if !queryItems.isEmpty {
-                urlComponents?.queryItems = queryItems
-            }
+            urlComponents?.queryItems = queryItems.isEmpty ? nil : queryItems
 
             guard let url = urlComponents?.url else {
-                throw URLError.invalid
+                throw URLError.badUrl
             }
 
             var urlRequest = URLRequest(url: url)
             urlRequest.httpMethod = method.rawValue
 
             if let body = body {
-                urlRequest.httpBody = body
-                    .map { key, value in
-                        "\(key)=\(value)"
-                    }
-                    .joined(separator: "&")
-                    .data(using: .utf8)
-            }
-
-            if let data = data {
+                urlRequest.httpBody = try JSONSerialization.data(withJSONObject: body)
+                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            } else if let data = data {
                 urlRequest.httpBody = data
             }
 
-            if let headers = headers {
-                for header in headers {
-                    urlRequest.setValue(header.value, forHTTPHeaderField: header.field.rawValue)
-                }
+            headers?.forEach { header in
+                urlRequest.setValue(header.value, forHTTPHeaderField: header.field.rawValue)
             }
 
             return urlRequest

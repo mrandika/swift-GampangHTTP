@@ -7,6 +7,6 @@
 
 import Foundation
 
-public enum CastError: Error {
+public enum GampangCastError: Error {
     case failed
 }
