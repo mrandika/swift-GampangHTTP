@@ -1,4 +1,7 @@
 # GampangHTTP
+[![Build and Test GampangHTTP](https://github.com/mrandika/swift-GampangHTTP/actions/workflows/build-test.yml/badge.svg?branch=main)](https://github.com/mrandika/swift-GampangHTTP/actions/workflows/build-test.yml)
+
+
 Dead-simple HTTP Networking in Swift using URLSession.
 
 ## Table of Contents
