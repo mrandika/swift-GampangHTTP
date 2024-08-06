@@ -46,7 +46,7 @@ public struct GampangURLRequest {
             urlComponents?.queryItems = queryItems.isEmpty ? nil : queryItems
 
             guard let url = urlComponents?.url else {
-                throw URLError.badUrl
+                throw GampangURLError.badUrl
             }
 
             var urlRequest = URLRequest(url: url)

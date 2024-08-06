@@ -71,7 +71,7 @@ public struct GampangHTTP {
         return try await withTaskCancellationHandler {
             while true {
                 do {
-                    let (data, response) = try await executeRequest(currentRequest)
+                    let (data, _) = try await executeRequest(currentRequest)
                     logger.log("Response received for \(currentRequest.url?.absoluteString ?? "")")
                     
                     let decoder = JSONDecoder()
