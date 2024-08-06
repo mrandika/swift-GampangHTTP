@@ -100,8 +100,13 @@ Available HTTP methods:
 2. `.get`
 3. `.put`
 4. `.delete`
+5. `.patch`
+6. `.head`
+7. `.options`
+8. `.trace`
+9. `.connect`
 
-> 💡 More methods are coming soon.
+> Reference: [HTTP request methods](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods)
 
 ### Adding Headers
 ```swift
@@ -117,6 +122,7 @@ let request = GampangURLRequest(
 Available header fields:
 1. `.contentType`
 2. `.authorization`
+3. `.accept`
 
 > 💡 More header fields and custom are coming soon.
 
