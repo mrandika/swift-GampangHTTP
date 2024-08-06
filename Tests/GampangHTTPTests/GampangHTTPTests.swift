@@ -15,8 +15,10 @@ final class GampangHTTPTests: XCTestCase {
         
         let url: String = "https://httpbin.org/get"
         
-        let request = try GampangURLRequest(url: url, method: .get).build
-        let result = try await GampangHTTP.request(with: request, of: HttpBin.self)
+        let request = try GampangURLRequest(url: url, method: .get).urlRequest
+        
+        let client = GampangHTTP()
+        let result = try await client.request(with: request, of: HttpBin.self)
         
         XCTAssertEqual(result.url, url)
     }
