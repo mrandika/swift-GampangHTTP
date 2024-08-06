@@ -30,7 +30,7 @@ GampangHTTP can be installed using Swift Package Manager. Add it to your project
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/GampangHTTP.git", from: "x.x.x")
+    .package(url: "https://github.com/mrandika/swift-GampangHTTP.git", from: "x.x.x")
 ]
 ```
 
